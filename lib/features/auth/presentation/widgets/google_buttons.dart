@@ -19,8 +19,8 @@ class GoogleButtons extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           mainAxisSize: MainAxisSize.min,
           children: [
-            Image.network(
-              'https://www.google.com/images/branding/googlelogo/1x/googlelogo_color_272x92dp.png',
+            Image.asset(
+              "assets/images/google.jpg",
               height: 16,
             ),
             const SizedBox(width: 10),

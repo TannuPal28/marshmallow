@@ -1,5 +1,5 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:marshmallow/core/utils/auth_manager.dart';
 import 'package:marshmallow/core/widgets/custom_search_bar.dart';
 import 'package:marshmallow/features/auth/presentation/pages/login_page.dart';
 import 'package:marshmallow/features/auth/presentation/pages/register_page.dart';
@@ -26,6 +26,52 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   bool showMenu = false;
+  bool isLoggedIn = false;
+  String userName = "";
+  String userEmail = "";
+
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    checkLogin();
+  }
+
+  Future<void> checkLogin() async {
+
+    final loggedIn =
+    await AuthManager.isLoggedIn();
+
+    debugPrint("LOGIN STATUS => $loggedIn");
+
+    if (loggedIn) {
+
+      userName =
+      await AuthManager.getUserName();
+
+      userEmail =
+      await AuthManager.getUserEmail();
+
+      debugPrint("USER NAME => $userName");
+
+      debugPrint("USER EMAIL => $userEmail");
+    }
+
+    setState(() {
+
+      isLoggedIn = loggedIn;
+    });
+  }
+
+  Future<void> logout() async {
+    await AuthManager.logout();
+    setState(() {
+      isLoggedIn = false;
+      showMenu = false;
+      userName = "";
+      userEmail = "";
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -35,7 +81,10 @@ class _HomePageState extends State<HomePage> {
     final productProvider = Provider.of<ProductProvider>(context);
 
     /// SINGLE LOADER
-    final isLoading = bannerProvider.isLoading || categoryProvider.isLoading || productProvider.isLoading;
+    final isLoading =
+        bannerProvider.isLoading ||
+        categoryProvider.isLoading ||
+        productProvider.isLoading;
     return Scaffold(
       body: isLoading
           ? const Center(child: CircularProgressIndicator())
@@ -57,10 +106,13 @@ class _HomePageState extends State<HomePage> {
                               });
                             },
                           ),
-                          const SizedBox(height:  25),
+                          const SizedBox(height: 25),
                           const CustomSearchBar(),
                           if (showMenu)
                             PopupMenuWidget(
+                              isLoggedIn: isLoggedIn,
+                              userName: userName,
+                              userEmail: userEmail,
                               onLoginTap: () {
                                 Navigator.push(
                                   context,
@@ -84,6 +136,9 @@ class _HomePageState extends State<HomePage> {
                                     builder: (_) => const SellerRegisterPage(),
                                   ),
                                 );
+                              },
+                              onLogoutTap: () async {
+                                await logout();
                               },
                             ),
                         ],

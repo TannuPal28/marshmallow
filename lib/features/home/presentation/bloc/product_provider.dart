@@ -2,6 +2,7 @@ import 'dart:math';
 
 import 'package:flutter/cupertino.dart';
 import 'package:marshmallow/features/home/data/models/product_model.dart';
+import 'package:marshmallow/features/home/data/models/similar_product_model.dart';
 import 'package:marshmallow/features/home/data/repositories/product_repository.dart';
 
 class ProductProvider extends ChangeNotifier {
@@ -10,6 +11,7 @@ class ProductProvider extends ChangeNotifier {
   ProductProvider(this.repository);
 
   List<ProductItem> products = [];
+  List<SimilarProductItem> similarProducts= [];
   bool isLoading = false;
   bool isPaginationLoading = false;
   int currentPage = 1;
@@ -65,5 +67,35 @@ class ProductProvider extends ChangeNotifier {
     products.clear();
 
     await fetchProducts();
+  }
+
+  Future<void> fetchSimilarProducts({
+    required String categoryId,
+    required String productId,
+  }) async {
+
+    try {
+
+      isLoading = true;
+
+      notifyListeners();
+
+      final response = await repository.getSimilarProducts(
+        categoryId: categoryId,
+        productId: productId,
+      );
+
+      similarProducts = response;
+
+    } catch (e) {
+
+      debugPrint(e.toString());
+
+    } finally {
+
+      isLoading = false;
+
+      notifyListeners();
+    }
   }
 }

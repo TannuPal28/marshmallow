@@ -8,6 +8,7 @@ import 'package:provider/provider.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import 'login_page.dart';
+import 'otp_page.dart';
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});
@@ -112,7 +113,19 @@ class _RegisterPageState extends State<RegisterPage> {
       debugPrint(user.fullName);
       debugPrint(user.email);
 
-      //Next screen otp remaining
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => OtpPage(
+            mobile: mobileController.text.trim(),
+            email: emailController.text.trim(),
+            showMobileOtp: true,
+            showEmailOtp: true,
+            fromLogin: false,
+            isForgotPassword: false,
+          ),
+        ),
+      );
     } else {
       showMessage(provider.errorMessage);
     }
@@ -135,11 +148,18 @@ class _RegisterPageState extends State<RegisterPage> {
             children: [
               AuthHeaderWidget(
                 showMenu: showMenu,
+
                 onMenuTap: () {
                   setState(() {
                     showMenu = !showMenu;
                   });
                 },
+
+                isLoggedIn: false,
+                userName: "",
+                userEmail: "",
+
+                onLogoutTap: () {},
               ),
               Container(
                 margin: const EdgeInsets.all(20),

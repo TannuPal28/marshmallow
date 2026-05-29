@@ -1,6 +1,10 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:provider/provider.dart';
+
+import '../../../home/presentation/pages/home_page.dart';
+import '../bloc/seller_register_provider.dart';
 
 class KycDocumentsStep extends StatefulWidget {
   final VoidCallback onSubmit;
@@ -20,27 +24,30 @@ class _KycDocumentsStepState extends State<KycDocumentsStep> {
   bool _isAgreed = false;
   final ImagePicker _picker = ImagePicker();
 
-  final Map<String, String?> _uploadedFiles={
+  final Map<String, String?> _uploadedFiles = {
     "PAN Card Copy *": null,
     "Aadhaar Card *": null,
     "Business Proof *": null,
     "Address Proof *": null,
   };
 
-  Future<void> _pickDocument(String docType) async{
-    try{
-      final XFile? pickedFile= await _picker.pickImage(source: ImageSource.gallery,
-      imageQuality: 80);
+  Future<void> _pickDocument(String docType) async {
+    try {
+      final XFile? pickedFile = await _picker.pickImage(
+        source: ImageSource.gallery,
+        imageQuality: 80,
+      );
 
-      if(pickedFile != null){
+      if (pickedFile != null) {
         setState(() {
           _uploadedFiles[docType] = pickedFile.path;
         });
       }
-    }catch (e) {
+    } catch (e) {
       debugPrint("Error picking file: $e");
     }
   }
+
   void _removeDocument(String docType) {
     setState(() {
       _uploadedFiles[docType] = null;
@@ -49,7 +56,14 @@ class _KycDocumentsStepState extends State<KycDocumentsStep> {
 
   @override
   Widget build(BuildContext context) {
-    int uploadedCount= _uploadedFiles.values.where((path) => path!= null).length;
+    final provider = Provider.of<SellerRegisterProvider>(
+      context,
+      listen: false,
+    );
+
+    int uploadedCount = _uploadedFiles.values
+        .where((path) => path != null)
+        .length;
     return Padding(
       padding: const EdgeInsets.all(24),
       child: Column(
@@ -124,19 +138,23 @@ class _KycDocumentsStepState extends State<KycDocumentsStep> {
                 children: [
                   Text(
                     "Uploaded Documents ($uploadedCount/4):",
-                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xffa50034)),
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xffa50034),
+                    ),
                   ),
                   const SizedBox(height: 16),
 
-
-                  ..._uploadedFiles.entries.where((entry) => entry.value != null).map((entry) {
-
-                    String fileName = entry.value!.split('/').last;
-                    return Padding(
-                      padding: const EdgeInsets.only(bottom: 12),
-                      child: _buildUploadedFileRow(entry.key, fileName),
-                    );
-                  }),
+                  ..._uploadedFiles.entries
+                      .where((entry) => entry.value != null)
+                      .map((entry) {
+                        String fileName = entry.value!.split('/').last;
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 12),
+                          child: _buildUploadedFileRow(entry.key, fileName),
+                        );
+                      }),
                 ],
               ),
             ),
@@ -155,10 +173,16 @@ class _KycDocumentsStepState extends State<KycDocumentsStep> {
               children: [
                 const Text(
                   "Document Requirements:",
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xff1e40af)),
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xff1e40af),
+                  ),
                 ),
                 const SizedBox(height: 16),
-                _buildRequirementRow("All documents must be clear and readable"),
+                _buildRequirementRow(
+                  "All documents must be clear and readable",
+                ),
                 const SizedBox(height: 12),
                 _buildRequirementRow("Maximum file size: 5MB per document"),
                 const SizedBox(height: 12),
@@ -222,9 +246,18 @@ class _KycDocumentsStepState extends State<KycDocumentsStep> {
               style: OutlinedButton.styleFrom(
                 backgroundColor: const Color(0xfff3f4f6),
                 side: BorderSide.none,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
               ),
-              child: const Text("Previous", style: TextStyle(color: Color(0xff374151), fontSize: 16, fontWeight: FontWeight.bold)),
+              child: const Text(
+                "Previous",
+                style: TextStyle(
+                  color: Color(0xff374151),
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
             ),
           ),
           const SizedBox(height: 16),
@@ -232,13 +265,48 @@ class _KycDocumentsStepState extends State<KycDocumentsStep> {
             width: double.infinity,
             height: 52,
             child: ElevatedButton(
-              onPressed: (_isAgreed && uploadedCount >= 1) ? widget.onSubmit : null, // कम से कम 1 अपलोड और टिक होना ज़रूरी है
+              onPressed: (_isAgreed && uploadedCount >= 1)
+                  ? () async {
+                      final provider = Provider.of<SellerRegisterProvider>(
+                        context,
+                        listen: false,
+                      );
+                      widget.onSubmit();
+
+                      final success = await provider.registerSeller(context);
+                      if (success) {
+                        Navigator.pushAndRemoveUntil(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const HomePage(),
+                          ),
+                              (route) => false,
+                        );
+                      }
+
+
+                    }
+                  : null,
+
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xffa50034),
-                disabledBackgroundColor: const Color(0xffa50034).withOpacity(0.5),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                disabledBackgroundColor: const Color(
+                  0xffa50034,
+                ).withOpacity(0.5),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
               ),
-              child: const Text("Submit Application", style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+              child: provider.isLoading
+                  ? const CircularProgressIndicator(color: Colors.white)
+                  : const Text(
+                      "Submit Application",
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
             ),
           ),
         ],
@@ -251,7 +319,6 @@ class _KycDocumentsStepState extends State<KycDocumentsStep> {
     required String subtitle,
     required String docKey,
   }) {
-
     bool hasFile = _uploadedFiles[docKey] != null;
 
     return InkWell(
@@ -278,18 +345,30 @@ class _KycDocumentsStepState extends State<KycDocumentsStep> {
                 color: const Color(0xffa50034),
                 borderRadius: BorderRadius.circular(4),
               ),
-              child: Icon(hasFile ? Icons.check : Icons.file_upload, color: Colors.white, size: 20),
+              child: Icon(
+                hasFile ? Icons.check : Icons.file_upload,
+                color: Colors.white,
+                size: 20,
+              ),
             ),
             const SizedBox(height: 14),
             Text(
               title,
-              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Color(0xff1f2937)),
+              style: const TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+                color: Color(0xff1f2937),
+              ),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 6),
             Text(
               hasFile ? "Click to change file" : subtitle,
-              style: TextStyle(fontSize: 12, color: hasFile ? Colors.green[700] : const Color(0xff6b7280), height: 1.3),
+              style: TextStyle(
+                fontSize: 12,
+                color: hasFile ? Colors.green[700] : const Color(0xff6b7280),
+                height: 1.3,
+              ),
               textAlign: TextAlign.center,
               maxLines: 2,
             ),
@@ -298,7 +377,6 @@ class _KycDocumentsStepState extends State<KycDocumentsStep> {
       ),
     );
   }
-
 
   Widget _buildUploadedFileRow(String docType, String fileName) {
     return Container(
@@ -326,11 +404,20 @@ class _KycDocumentsStepState extends State<KycDocumentsStep> {
                 side: const BorderSide(color: Color(0xfffca5a5)),
                 backgroundColor: const Color(0xfffef2f2),
                 padding: const EdgeInsets.symmetric(horizontal: 12),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(6),
+                ),
               ),
-              child: const Text("Remove", style: TextStyle(color: Color(0xffef4444), fontSize: 12, fontWeight: FontWeight.bold)),
+              child: const Text(
+                "Remove",
+                style: TextStyle(
+                  color: Color(0xffef4444),
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
             ),
-          )
+          ),
         ],
       ),
     );
@@ -342,7 +429,12 @@ class _KycDocumentsStepState extends State<KycDocumentsStep> {
       children: [
         const Icon(Icons.check, color: Color(0xff2563eb), size: 18),
         const SizedBox(width: 10),
-        Expanded(child: Text(text, style: const TextStyle(color: Color(0xff1e3a8a), fontSize: 13))),
+        Expanded(
+          child: Text(
+            text,
+            style: const TextStyle(color: Color(0xff1e3a8a), fontSize: 13),
+          ),
+        ),
       ],
     );
   }

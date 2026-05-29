@@ -86,11 +86,18 @@ class _SellerRegisterPageState extends State<SellerRegisterPage> {
               /// HEADER
               AuthHeaderWidget(
                 showMenu: showMenu,
+
                 onMenuTap: () {
                   setState(() {
                     showMenu = !showMenu;
                   });
                 },
+
+                isLoggedIn: false,
+                userName: "",
+                userEmail: "",
+
+                onLogoutTap: () {},
               ),
 
               Container(
