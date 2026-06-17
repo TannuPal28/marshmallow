@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:marshmallow/features/auth/data/models/register_model.dart';
 import 'package:marshmallow/features/auth/presentation/bloc/register_provider.dart';
 import 'package:marshmallow/features/auth/presentation/widgets/auth_header_widget.dart';
+import 'package:marshmallow/features/auth/presentation/widgets/common_header_widget.dart';
 import 'package:marshmallow/features/auth/presentation/widgets/custom_auth_textfield.dart';
 import 'package:provider/provider.dart';
 
@@ -22,7 +23,6 @@ class _RegisterPageState extends State<RegisterPage> {
   bool confirmPasswordVisible = false;
   bool agreeTerms = false;
   bool updates = true;
-  bool showMenu = false;
 
   final TextEditingController firstNameController = TextEditingController();
   final TextEditingController lastNameController = TextEditingController();
@@ -146,21 +146,7 @@ class _RegisterPageState extends State<RegisterPage> {
         child: SingleChildScrollView(
           child: Column(
             children: [
-              AuthHeaderWidget(
-                showMenu: showMenu,
-
-                onMenuTap: () {
-                  setState(() {
-                    showMenu = !showMenu;
-                  });
-                },
-
-                isLoggedIn: false,
-                userName: "",
-                userEmail: "",
-
-                onLogoutTap: () {},
-              ),
+              const CommonHeaderWidget(),
               Container(
                 margin: const EdgeInsets.all(20),
                 padding: const EdgeInsets.all(24),

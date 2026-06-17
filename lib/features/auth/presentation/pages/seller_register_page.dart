@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:marshmallow/features/auth/presentation/widgets/bank_details_step.dart';
+import 'package:marshmallow/features/auth/presentation/widgets/common_header_widget.dart';
 import 'package:marshmallow/features/auth/presentation/widgets/kyc_documents_step.dart';
 import 'package:marshmallow/features/auth/presentation/widgets/tax_info_step.dart';
 
@@ -84,21 +85,7 @@ class _SellerRegisterPageState extends State<SellerRegisterPage> {
             children: [
 
               /// HEADER
-              AuthHeaderWidget(
-                showMenu: showMenu,
-
-                onMenuTap: () {
-                  setState(() {
-                    showMenu = !showMenu;
-                  });
-                },
-
-                isLoggedIn: false,
-                userName: "",
-                userEmail: "",
-
-                onLogoutTap: () {},
-              ),
+             const CommonHeaderWidget(),
 
               Container(
                 margin: const EdgeInsets.all(16),

@@ -4,6 +4,9 @@ import 'package:marshmallow/features/auth/data/repositories/verify_forgot_passwo
 import 'package:marshmallow/features/auth/data/repositories/verify_otp_repository.dart';
 import 'package:marshmallow/features/auth/presentation/bloc/verify_forgot_password_otp_provider.dart';
 import 'package:marshmallow/features/auth/presentation/bloc/verify_otp_provider.dart';
+import 'package:marshmallow/features/checkout/data/datasources/checkout_remote_datasource.dart';
+import 'package:marshmallow/features/checkout/data/repositories/checkout_repository.dart';
+import 'package:marshmallow/features/checkout/presentattion/bloc/checkout_provider.dart';
 import 'package:marshmallow/features/home/data/datasources/category_remote_datasource.dart';
 import 'package:marshmallow/features/home/data/datasources/product_remote_datasource.dart';
 import 'package:marshmallow/features/home/data/repositories/category_repository.dart';
@@ -35,6 +38,7 @@ import 'features/auth/presentation/bloc/login_provider.dart';
 import 'features/auth/presentation/bloc/register_provider.dart';
 import 'features/auth/presentation/bloc/reset_password_provider.dart';
 import 'features/auth/presentation/bloc/seller_register_provider.dart';
+import 'features/auth/presentation/pages/header_provider.dart';
 import 'features/home/data/datasources/banner_remote_datasource.dart';
 import 'features/home/data/repositories/banner_repository.dart';
 import 'features/home/presentation/bloc/banner_provider.dart';
@@ -50,6 +54,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
+        ChangeNotifierProvider(create: (_) => HeaderProvider()..loadUser()),
         ChangeNotifierProvider(
           create: (_) => BannerProvider(
             BannerRepository(BannerRemoteDatasource(DioClient())),
@@ -102,6 +107,11 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(
           create: (_) => AddToCartProvider(
             AddToCartRepository(AddToCartRemoteDatasource(DioClient())),
+          ),
+        ),
+        ChangeNotifierProvider(
+          create: (_) => CheckoutProvider(
+            CheckoutRepository(CheckoutRemoteDatasource(DioClient())),
           ),
         ),
       ],

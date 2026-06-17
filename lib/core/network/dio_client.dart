@@ -124,4 +124,17 @@ class DioClient {
       queryParameters: queryParameters,
     );
   }
+
+  Future<Response> delete(
+      String url, {
+        dynamic data,
+        Map<String, dynamic>? queryParameters,
+      }) async {
+
+    return await dio.delete(
+      url,
+      data: data,
+      queryParameters: queryParameters,
+    );
+  }
 }

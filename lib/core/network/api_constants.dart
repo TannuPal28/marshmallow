@@ -37,5 +37,13 @@ class ApiConstants {
   static String addToCart = "/cart/add";
 
   static String updateCart(String cartItemId) =>
-      "/v1/user/cart/update/$cartItemId";
+      "/cart/update/$cartItemId";
+
+  static const String getCart = "/cart";
+  static  String removeCart(String cartItemId) =>  '/cart/remove/$cartItemId';
+  static  String wishlistAdd =  '/wishlist/add';
+  static  String wishlistRemove =  '/wishlist/remove';
+  static const String getWishlist = "/wishlist";
+  static const String getAddress = "/address";
+  static const String getCoupons = "/coupons/active";
 }

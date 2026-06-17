@@ -32,9 +32,18 @@ class _HomePageState extends State<HomePage> {
 
   @override
   void initState() {
-    // TODO: implement initState
     super.initState();
-    checkLogin();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      await checkLogin();
+
+      final productProvider = context.read<ProductProvider>();
+
+      if (isLoggedIn) {
+        await productProvider.loadCartIfNeeded();
+        await productProvider.fetchWishlist();
+      }
+    });
   }
 
   Future<void> checkLogin() async {
@@ -70,6 +79,7 @@ class _HomePageState extends State<HomePage> {
       showMenu = false;
       userName = "";
       userEmail = "";
+
     });
   }
 

@@ -32,6 +32,7 @@ class _TrendingProductsWidgetState extends State<TrendingProductsWidget> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final provider = context.read<ProductProvider>();
 
+
       // SIMILAR PRODUCTS
       if (widget.isFromProductDetail) {
         provider.fetchSimilarProducts(
@@ -116,6 +117,14 @@ class _TrendingProductsWidgetState extends State<TrendingProductsWidget> {
                     }
 
                     final product = items[index];
+                    final cartItem = provider.getCartItem(product.id);
+                    final isFav = provider.isWishlisted(product.id);
+
+                    final addToCartProvider =
+                    context.watch<AddToCartProvider>();
+
+                    final isUpdating =
+                        addToCartProvider.updatingCartId == cartItem?.id;
 
                     // IMAGE
                     String image = "";
@@ -217,14 +226,17 @@ class _TrendingProductsWidgetState extends State<TrendingProductsWidget> {
                                           }
 
                                           // wishlist api
+                                          await context.read<ProductProvider>().toggleWishlistAPI(
+                                            productId: product.id,
+                                            variantId: product.firstVariantId ?? "",
+                                          );
+
                                         },
 
-                                        child: const Icon(
-                                          Icons.favorite_border,
-
+                                        child: Icon(
+                                          isFav ? Icons.favorite : Icons.favorite_border,
+                                          color: isFav ? Colors.red : Colors.grey,
                                           size: 18,
-
-                                          color: Colors.grey,
                                         ),
                                       ),
                                     ),
@@ -378,64 +390,143 @@ class _TrendingProductsWidgetState extends State<TrendingProductsWidget> {
                               const SizedBox(height: 10),
 
                               // ================= BUTTON =================
-                              SizedBox(
-                                width: double.infinity,
+                              cartItem == null
+                                  ? SizedBox(
+                                      width: double.infinity,
+                                      height: 32,
+                                      child: ElevatedButton(
+                                        onPressed: () async {
+                                          final isLoggedIn =
+                                              await Utils.checkLogin(context);
 
-                                height: 32,
+                                          if (!isLoggedIn) return;
 
-                                child: ElevatedButton(
-                                  onPressed: () async {
-                                    final isLoggedIn = await Utils.checkLogin(
-                                      context,
-                                    );
+                                          final success = await context
+                                              .read<AddToCartProvider>()
+                                              .addToCart(
+                                                productId: product.id,
+                                                quantity: 1,
+                                                variantId:
+                                                    product.firstVariantId,
+                                              );
 
-                                    if (!isLoggedIn) {
-                                      return;
-                                    }
+                                          if (success) {
+                                            provider.markCartDirty();
 
-                                    // add to cart api
-                                    final success = await context
-                                        .read<AddToCartProvider>()
-                                        .addToCart(
+                                            await provider.loadCartIfNeeded(
+                                              forceRefresh: true,
+                                            );
 
-                                      productId: product.id,
-                                      quantity: 1,
-                                      variantId: product.firstVariantId,
-                                    );
-                                    if (success) {
+                                            ScaffoldMessenger.of(
+                                              context,
+                                            ).showSnackBar(
+                                              const SnackBar(
+                                                content: Text("Added to cart"),
+                                              ),
+                                            );
+                                          }
+                                        },
 
-                                      ScaffoldMessenger.of(context).showSnackBar(
-                                        const SnackBar(
-                                          content: Text("Added to cart"),
+                                        style: ElevatedButton.styleFrom(
+                                          backgroundColor: const Color(
+                                            0xFF9E1B42,
+                                          ),
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius: BorderRadius.circular(
+                                              4,
+                                            ),
+                                          ),
                                         ),
-                                      );
-                                    }
+                                        child: const Text(
+                                          "ADD TO CART",
+                                          style: TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                      ),
+                                    )
+                                  : Container(
+                                      height: 32,
+                                      decoration: BoxDecoration(
+                                        border: Border.all(
+                                          color: const Color(0xFF9E1B42),
+                                        ),
+                                        borderRadius: BorderRadius.circular(4),
+                                      ),
+                                      child: Row(
+                                        children: [
+                                          Expanded(
+                                            child: InkWell(
+                                              onTap: () async {
+                                                /*if (cartItem.quantity <= 1) {
+                                                  return;
+                                                }*/
+                                                await context
+                                                    .read<AddToCartProvider>()
+                                                    .updateCart(
+                                                      cartItemId: cartItem.id,
+                                                      quantity:
+                                                          cartItem.quantity - 1,
+                                                    );
+                                                provider.markCartDirty();
 
-                                  },
+                                                await provider.loadCartIfNeeded(
+                                                  forceRefresh: true,
+                                                );
+                                              },
+                                              child: const Center(
+                                                child: Icon(Icons.remove),
+                                              ),
+                                            ),
+                                          ),
 
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: const Color(0xFF9E1B42),
+                                          Expanded(
+                                            child: Center(
+                                              child: isUpdating
+                                                  ? const SizedBox(
+                                                height: 18,
+                                                width: 18,
+                                                child: CircularProgressIndicator(
+                                                  strokeWidth: 2,
+                                                ),
+                                              )
+                                                  : Text(
+                                                cartItem.quantity.toString(),
+                                                style: const TextStyle(
+                                                  fontWeight: FontWeight.bold,
+                                                ),
+                                              ),
+                                            ),
+                                          ),
 
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(4),
+
+                                          Expanded(
+                                            child: InkWell(
+                                              onTap: () async {
+                                                await context
+                                                    .read<AddToCartProvider>()
+                                                    .updateCart(
+                                                      cartItemId: cartItem.id,
+                                                      quantity:
+                                                          cartItem.quantity + 1,
+                                                    );
+
+                                                provider.markCartDirty();
+
+                                                await provider.loadCartIfNeeded(
+                                                  forceRefresh: true,
+                                                );
+                                              },
+                                              child: const Center(
+                                                child: Icon(Icons.add),
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
                                     ),
-
-                                    padding: EdgeInsets.zero,
-                                  ),
-
-                                  child: const Text(
-                                    "ADD TO CART",
-
-                                    style: TextStyle(
-                                      color: Colors.white,
-
-                                      fontSize: 12,
-
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                ),
-                              ),
                             ],
                           ),
                         ),

@@ -9,7 +9,9 @@ import 'package:marshmallow/features/productDetail/presentation/widgets/tab_revi
 import 'package:provider/provider.dart';
 
 import '../../../auth/presentation/widgets/auth_header_widget.dart';
+import '../../../home/presentation/bloc/product_provider.dart';
 import '../../../home/presentation/widgets/trending_products_widget.dart';
+import '../widgets/product_action_widget.dart';
 import '../widgets/tab_description_widget.dart';
 
 class ProductDetailScreen extends StatefulWidget {
@@ -58,7 +60,6 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
       );
     }
 
-    // सुरक्षा चेक: अगर स्टेटस loaded है पर प्रोडक्ट डेटा नहीं है या एरर आया है
     if (provider.status == ProductStatus.error || provider.product == null) {
       return Scaffold(
         body: Center(
@@ -69,7 +70,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
               const SizedBox(height: 16),
               Text(
                 provider.product == null
-                    ? "ডेटा मॉडल पार्स नहीं हो पाया (Null Product)"
+                    ? " (Null Product)"
                     : provider.errorMessage,
                 style: const TextStyle(
                   color: Colors.red,
@@ -90,9 +91,17 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     }
 
     final product = provider.product!;
+    final cartProvider = context.watch<ProductProvider>();
+    final cartItem = cartProvider.getCartItem(product.id);
+    final addToCartProvider = context.watch<AddToCartProvider>();
+    final isRemoving =
+        addToCartProvider.removingCartId == cartItem?.id;
+
+    final isUpdating =
+        addToCartProvider.updatingCartId == cartItem?.id;
+
     final selectedVariant = provider.selectedVariant;
 
-    // डेटा को सुरक्षित फ़ॉलबैक वैल्यू देना
     final double displayPrice = selectedVariant?.price ?? product.price ?? 0.0;
     final double displayMrp = selectedVariant?.mrp ?? product.mrp ?? 0.0;
     final int displayDiscount =
@@ -138,7 +147,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                 ),
               ),
 
-              // इमेज कंटेनर
+
               Container(
                 margin: const EdgeInsets.symmetric(horizontal: 16),
                 padding: const EdgeInsets.all(16),
@@ -163,7 +172,6 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
               ),
               const SizedBox(height: 12),
 
-              // थंबनेल्स लिस्ट
               if (selectedVariant != null && selectedVariant.images.isNotEmpty)
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -257,7 +265,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                 ),
               ),
 
-              // कलर्स रैप विजेट
+
               if (product.variants.isNotEmpty)
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16.0),
@@ -423,104 +431,123 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                 ),
               ),
 
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Quantity:',
-                      style: TextStyle(color: Colors.black54),
-                    ),
-                    const SizedBox(height: 8),
-                    Container(
-                      width: 129,
-                      decoration: BoxDecoration(
-                        border: Border.all(color: Colors.grey[300]!),
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          IconButton(
-                            icon: const Icon(Icons.remove, size: 16),
-                            onPressed: () {
-                              if (_quantity > 1) setState(() => _quantity--);
-                            },
-                          ),
-                          Text(
-                            '$_quantity',
-                            style: const TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          IconButton(
-                            icon: const Icon(Icons.add, size: 16),
-                            onPressed: () {
-                              num maxStock =
-                                  selectedVariant?.stock ?? product.stock;
-                              if (_quantity < maxStock)
-                                setState(() => _quantity++);
-                            },
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+
               const SizedBox(height: 20),
 
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16.0),
                 child: Column(
                   children: [
-                    ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF9E1B32),
-                        minimumSize: const Size(double.infinity, 48),
-                        shape: const RoundedRectangleBorder(),
-                      ),
-                      onPressed: (selectedVariant?.stock ?? product.stock) > 0
-                          ? () async {
-                              final success = await context
-                                  .read<AddToCartProvider>()
-                                  .addToCart(
-                                    productId: product.id,
-                                    quantity: _quantity,
-                                    variantId: selectedVariant?.id,
-                                  );
-                              if (success) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text("Added to cart"),
-                                  ),
-                                );
-                              }else{
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text("Failed to add cart"),
-                                  ),
-                                );
-                              }
-                            }
-                          : null,
-                      child: const Text(
-                        'ADD TO CART',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
+
+                    ProductActionWidget(
+                      isAdding: addToCartProvider.isAdding,
+
+                      showCartActions: cartItem != null,
+
+                      quantity: cartItem?.quantity ?? _quantity,
+
+                      isUpdating: isUpdating,
+                      isRemoving: isRemoving,
+
+                      onMinus: () async {
+                        if (cartItem == null) {
+                          if (_quantity > 1) {
+                            setState(() {
+                              _quantity--;
+                            });
+                          }
+                        } else {
+                          if (cartItem.quantity == 1) {
+                            await context
+                                .read<AddToCartProvider>()
+                                .removeCart(
+                              cartItemId: cartItem.id,
+                            );
+                          } else {
+                            await context
+                                .read<AddToCartProvider>()
+                                .updateCart(
+                              cartItemId: cartItem.id,
+                              quantity: cartItem.quantity - 1,
+                            );
+                          }
+
+                          cartProvider.updateLocalCartQuantity(
+                            cartItem.id,
+                            cartItem.quantity - 1,
+                          );
+                        }
+                      },
+
+                      onPlus: () async {
+                        if (cartItem == null) {
+                          setState(() {
+                            _quantity++;
+                          });
+                        } else {
+                          await context
+                              .read<AddToCartProvider>()
+                              .updateCart(
+                            cartItemId: cartItem.id,
+                            quantity: cartItem.quantity + 1,
+                          );
+
+                          cartProvider.updateLocalCartQuantity(
+                            cartItem.id,
+                            cartItem.quantity + 1,
+                          );
+                        }
+                      },
+
+                      onAddToCart: () async {
+                        final success = await context
+                            .read<AddToCartProvider>()
+                            .addToCart(
+                          productId: product.id,
+                          quantity: _quantity,
+                          variantId: selectedVariant?.id,
+                        );
+
+                        if (success) {
+                          cartProvider.markCartDirty();
+
+                          await cartProvider.loadCartIfNeeded(
+                            forceRefresh: true,
+                          );
+                        }
+                      },
+
+                      onRemove: () async {
+                        await context
+                            .read<AddToCartProvider>()
+                            .removeCart(
+                          cartItemId: cartItem!.id,
+                        );
+
+                        cartProvider.removeLocalCartItem(
+                          cartItem.id,
+                        );
+                      },
+
+                      onGoToCart: () {
+                        Navigator.pushNamed(context, '/cart');
+                      },
+
+                      onContinueShopping: () {
+                        Navigator.pop(context);
+                      },
                     ),
+
                     const SizedBox(height: 10),
+
                     ElevatedButton(
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF9E1B32),
                         minimumSize: const Size(double.infinity, 48),
                         shape: const RoundedRectangleBorder(),
                       ),
-                      onPressed: (selectedVariant?.stock ?? product.stock) > 0
+                      onPressed:
+                      (selectedVariant?.stock ?? product.stock) > 0
                           ? () {}
                           : null,
                       child: const Text(

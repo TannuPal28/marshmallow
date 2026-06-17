@@ -17,4 +17,23 @@ class AddToCartRepository {
       variantId: variantId,
     );
   }
+
+  Future<void> updateCart({
+    required String cartItemId,
+    required int quantity,
+  }) async {
+
+    await remoteDatasource.updateCart(
+      cartItemId: cartItemId,
+      quantity: quantity,
+    );
+  }
+
+  Future<void> removeCart({
+    required String cartItemId,
+  }) async {
+    await remoteDatasource.removeCart(
+      cartItemId: cartItemId,
+    );
+  }
 }

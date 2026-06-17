@@ -16,6 +16,7 @@ import '../../../home/presentation/widgets/popup_menu_widget.dart';
 import '../widgets/auth_header_widget.dart';
 import '../widgets/login_tab_button.dart';
 import '../widgets/warning_banner.dart';
+import 'header_provider.dart';
 import 'otp_page.dart';
 
 class LoginPage extends StatefulWidget {
@@ -26,7 +27,6 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage> {
-  bool showMenu = false;
 
   bool obscurePassword = true;
   bool isEmailSelected = false;
@@ -37,6 +37,7 @@ class _LoginPageState extends State<LoginPage> {
   @override
   Widget build(BuildContext context) {
     final provider = Provider.of<LoginProvider>(context);
+    final headerProvider = context.watch<HeaderProvider>();
     return Scaffold(
       backgroundColor: const Color(0xFFEDF2F7),
       body: SafeArea(
@@ -44,19 +45,21 @@ class _LoginPageState extends State<LoginPage> {
           child: Column(
             children: [
               AuthHeaderWidget(
-                showMenu: showMenu,
+                showMenu: headerProvider.showMenu,
 
                 onMenuTap: () {
-                  setState(() {
-                    showMenu = !showMenu;
-                  });
+                  headerProvider.toggleMenu();
                 },
 
-                isLoggedIn: false,
-                userName: "",
-                userEmail: "",
+                isLoggedIn: headerProvider.isLoggedIn,
 
-                onLogoutTap: () {},
+                userName: headerProvider.userName,
+
+                userEmail: headerProvider.userEmail,
+
+                onLogoutTap: () async {
+                  await headerProvider.logout();
+                },
               ),
               Padding(
                 padding: const EdgeInsets.all(16.0),
@@ -462,6 +465,8 @@ class _LoginPageState extends State<LoginPage> {
           name: response.results?.fullName ?? "",
           email: response.results?.email ?? "",
         );
+
+        await context.read<HeaderProvider>().loadUser();
 
         Navigator.pushReplacement(
           context,
